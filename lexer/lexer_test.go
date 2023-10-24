@@ -8,6 +8,15 @@ import (
 func TestNextToken(t *testing.T) {
 	input := `=+(){},;`
 
+	input2 := `
+	let five = 5
+	let add = fn(x,y) {
+		x + y
+	}
+
+	let result = add(five, ten);
+	`
+
 	tests := []struct {
 		expectedType    token.TokenType
 		expectedLiteral string
@@ -27,10 +36,10 @@ func TestNextToken(t *testing.T) {
 	for i, tt := range tests {
 		tk := l.NextToken()
 		if tk.Type != tt.expectedType {
-			t.Fatalf("tests[%w] - tokentype wrong. expected=%q, got %q", i, tt.expectedType, tk.Type)
+			t.Fatalf("tests[%d] - tokentype wrong. expected=%q, got %q", i, tt.expectedType, tk.Type)
 		}
 		if tk.Literal != tt.expectedLiteral {
-			t.Fatalf("tests[%w] - tokentype wrong. expected=%q, got %q", i, tt.expectedLiteral, tk.Literal)
+			t.Fatalf("tests[%d] - tokentype wrong. expected=%q, got %q", i, tt.expectedLiteral, tk.Literal)
 		}
 	}
 }
