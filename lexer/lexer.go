@@ -9,7 +9,7 @@ type Lexer struct {
 	ch           byte
 }
 
-func New(input string) *Lexer {
+func NewLexer(input string) *Lexer {
 	lexer := &Lexer{
 		input: input,
 	}
@@ -37,6 +37,18 @@ func (l *Lexer) NextToken() token.Token {
 		tk = newToken(token.ASSIGN, l.ch)
 	case '+':
 		tk = newToken(token.PLUS, l.ch)
+	case '-':
+		tk = newToken(token.MINUS, l.ch)
+	case '!':
+		tk = newToken(token.BANG, l.ch)
+	case '/':
+		tk = newToken(token.SLASH, l.ch)
+	case '*':
+		tk = newToken(token.ASTERIK, l.ch)
+	case '<':
+		tk = newToken(token.LT, l.ch)
+	case '>':
+		tk = newToken(token.GT, l.ch)
 	case '(':
 		tk = newToken(token.LPAREN, l.ch)
 	case ')':
@@ -57,6 +69,10 @@ func (l *Lexer) NextToken() token.Token {
 			tk.Literal = l.readIdentifier()
 			tk.Type = token.LookUpIdentifier(tk.Literal)
 			return tk
+		} else if isDigit(l.ch) {
+			tk.Type = token.INT
+			tk.Literal = l.readNumber()
+			return tk
 		} else {
 			tk = newToken(token.ILLEGAL, l.ch)
 		}
@@ -68,6 +84,10 @@ func (l *Lexer) NextToken() token.Token {
 
 func isLetter(ch byte) bool {
 	return 'a' <= ch && ch <= 'z' || 'A' <= ch && ch <= 'Z' || ch == '_'
+}
+
+func isDigit(ch byte) bool {
+	return '0' <= ch && ch <= '9'
 }
 
 func (l *Lexer) readIdentifier() string {
@@ -86,4 +106,13 @@ func (l *Lexer) slipWhitespace() {
 	for l.ch == ' ' || l.ch == '\t' || l.ch == '\n' || l.ch == '\r' {
 		l.readChar()
 	}
+}
+
+func (l *Lexer) readNumber() string {
+	position := l.poistion
+
+	for isDigit(l.ch) {
+		l.readChar()
+	}
+	return l.input[position:l.poistion]
 }

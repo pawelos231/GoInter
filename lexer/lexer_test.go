@@ -8,15 +8,6 @@ import (
 func TestNextToken(t *testing.T) {
 	input := `=+(){},;`
 
-	input2 := `
-	let five = 5
-	let add = fn(x,y) {
-		x + y
-	}
-
-	let result = add(five, ten);
-	`
-
 	tests := []struct {
 		expectedType    token.TokenType
 		expectedLiteral string
@@ -31,7 +22,7 @@ func TestNextToken(t *testing.T) {
 		{token.SEMICOLON, ";"},
 	}
 
-	l := New(input)
+	l := NewLexer(input)
 
 	for i, tt := range tests {
 		tk := l.NextToken()
