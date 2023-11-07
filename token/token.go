@@ -2,6 +2,9 @@ package token
 
 type TokenType string
 
+//literal = let, if, fn...
+//TokenType = IDENT, FUNCTION, LET...
+
 type Token struct {
 	Type    TokenType
 	Literal string
