@@ -88,7 +88,7 @@ func (i *Identifier) TokenLiteral() string {
 }
 
 func (i *Identifier) String() string {
-	return i.Token.Literal
+	return i.Value
 }
 
 // ReturnStatement represents a return statement.
@@ -125,4 +125,12 @@ func (es *ExpressionStatement) StatementNode() {}
 
 func (es *ExpressionStatement) TokenLiteral() string {
 	return es.Token.Literal
+}
+
+func (es *ExpressionStatement) String() string {
+	if es.Expression != nil {
+		return es.Expression.String()
+	}
+
+	return ""
 }
