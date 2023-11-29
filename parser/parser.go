@@ -27,13 +27,24 @@ type (
 const (
 	_ int = iota
 	LOWEST
-	EQUAL
+	EQUALS
 	LESSGREATER
 	SUM
 	PRODUCT
 	PREFIX
 	CALL
 )
+
+var precedences = map[token.TokenType]int{
+	token.EQ:      EQUALS,
+	token.NOT_EQ:  EQUALS,
+	token.LT:      LESSGREATER,
+	token.GT:      LESSGREATER,
+	token.PLUS:    SUM,
+	token.MINUS:   SUM,
+	token.SLASH:   PRODUCT,
+	token.ASTERIK: PRODUCT,
+}
 
 func NewParser(l *lexer.Lexer) *Parser {
 	p := &Parser{
@@ -50,6 +61,13 @@ func NewParser(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.MINUS, p.parsePrefixExpression)
 
 	return p
+}
+
+func (p *Parser) peekPrecedence() int {
+	if p, ok := precedences[p.peekToken.Type]; ok {
+		return p
+	}
+	return LOWEST
 }
 
 func (p *Parser) Errors() []string {
