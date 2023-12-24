@@ -86,6 +86,17 @@ func checkParserError(t *testing.T, p *Parser) {
 	t.FailNow()
 }
 
+func checkParserErrors(t *testing.T, p *Parser) {
+	errors := p.errors
+	if len(errors) == 0 {
+		return
+	}
+	t.Errorf("parser has %d errors", len(errors))
+	for _, msg := range errors {
+		t.Errorf("parser error: %q", msg)
+	}
+}
+
 func TestIdentifierExpression(t *testing.T) {
 	input := "foobar;"
 
@@ -115,10 +126,6 @@ func TestIdentifierExpression(t *testing.T) {
 	if ident.TokenLiteral() != "foobar" {
 		t.Errorf("ident.TokenLiteral not %s, got %s", "foobar", ident.TokenLiteral())
 	}
-}
-
-func checkParserErrors(t *testing.T, p *Parser) {
-	panic("unimplemented")
 }
 
 func testLetStatement(t *testing.T, s ast.Statement, name string) bool {
@@ -275,6 +282,77 @@ func TestParsingInfixExpressions(t *testing.T) {
 
 		if !testIntegerLiteral(t, exp.Right, tt.rightValue) {
 			return
+		}
+	}
+}
+
+func TestOperatorPrecedenceParsing(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{
+			"-a * b",
+			"((-a) * b)",
+		},
+		{
+			"!-a",
+			"(!(-a))",
+		},
+		{
+			"a + b + c",
+			"((a + b) + c)",
+		},
+		{
+			"a + b - c",
+			"((a + b) - c)",
+		},
+		{
+			"a * b * c",
+			"((a * b) * c)",
+		},
+		{
+			"a * b / c",
+			"((a * b) / c)",
+		},
+		{
+			"a + b / c",
+			"(a + (b / c))",
+		},
+		{
+			"a + b * c + d / e - f",
+			"(((a + (b * c)) + (d / e)) - f)",
+		},
+		{
+			"3 + 4; -5 * 5",
+			"(3 + 4)((-5) * 5)",
+		},
+		{
+			"5 > 4 == 3 < 4",
+			"((5 > 4) == (3 < 4))",
+		},
+		{
+			"5 < 4 != 3 > 4",
+			"((5 < 4) != (3 > 4))",
+		},
+		{
+			"3 + 4 * 5 == 3 * 1 + 4 * 5",
+			"((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))",
+		},
+		{
+			"3 + 4 * 5 == 3 * 1 + 4 * 5",
+			"((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))",
+		},
+	}
+
+	for _, tt := range tests {
+		l := lexer.NewLexer(tt.input)
+		p := NewParser(l)
+		program := p.ParseProgram()
+		checkParserErrors(t, p)
+		actual := program.String()
+		if actual != tt.expected {
+			t.Errorf("EXPECTED=%q, GOT=%q", tt.expected, actual)
 		}
 	}
 }
