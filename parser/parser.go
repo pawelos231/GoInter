@@ -221,7 +221,7 @@ func (p *Parser) parseLetStatement() *ast.LetStatement {
 	}
 
 	stmt.Name = &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
-
+	fmt.Printf(stmt.String())
 	//for now ignore all expression until semicolon
 	if !p.expectPeek(token.ASSIGN) {
 		return nil

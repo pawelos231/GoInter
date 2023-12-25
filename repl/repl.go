@@ -10,6 +10,7 @@ import (
 	"io"
 )
 
+// visualization of lexer only, later think about visualizing parsed output in some kind of undersantable way
 const PROPMT = "->"
 
 func Start(in io.Reader, ouy io.Writer) {
