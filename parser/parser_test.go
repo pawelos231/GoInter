@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"interpreter/ast"
 	"interpreter/lexer"
-	"interpreter/parser"
 	"testing"
 )
 
@@ -188,7 +187,7 @@ func TestParsingPrefixExpressions(t *testing.T) {
 		integerValue int64
 	}{
 		{"!5;", "!", 5},
-		{"-5;", "-", 15},
+		{"-5;", "-", 5},
 	}
 
 	for _, tt := range prefixTests {
@@ -254,7 +253,7 @@ func TestParsingInfixExpressions(t *testing.T) {
 		{"5 == 5", 5, "==", 5},
 		{"5 != 5", 5, "!=", 5},
 		{"true == true", true, "==", true},
-		{"true != true", true, "!=", false},
+		{"true != true", true, "!=", true},
 		{"false == false", false, "==", false},
 	}
 
@@ -277,15 +276,19 @@ func TestParsingInfixExpressions(t *testing.T) {
 }
 
 func TestIfExpression(t *testing.T) {
-	input := `if (x < y) { x } else { y }`
+	input := `if(x < y) { x } else{y}`
 
 	l := lexer.NewLexer(input)
 	p := NewParser(l)
 	program := p.ParseProgram()
 	checkParserErrors(t, p)
 
+	for _, statement := range program.Statements {
+		print("Statement: ", statement.String(), "\n")
+	}
+
 	if len(program.Statements) != 1 {
-		t.Fatalf("program.Statements does not contain %d statements. got %d", 1, len(program.Statements))
+		t.Fatalf("program.Statements does not contain %d statements. got %d \n, program.Statements = %s", 1, len(program.Statements), program.Statements[3].String())
 	}
 
 	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
@@ -444,7 +447,7 @@ func TestFunctionLiteralParsing(t *testing.T) {
 	input := `fn(x, y) { x +  y; }`
 
 	l := lexer.NewLexer(input)
-	p := parser.NewParser(l)
+	p := NewParser(l)
 	program := p.ParseProgram()
 	checkParserErrors(t, p)
 
@@ -471,7 +474,7 @@ func TestFunctionLiteralParsing(t *testing.T) {
 		t.Fatalf("function.Body.Statements has not 1 statements. got=%d\n", len(function.Body.Statements))
 	}
 
-	bodyStmt, ok := function.Body.Statements[0].(*ast.Statement)
+	bodyStmt, ok := function.Body.Statements[0].(*ast.ExpressionStatement)
 	if !ok {
 		t.Fatalf("function body stmt is not ast.ExpressionStatement. got=%T", function.Body.Statements[0])
 	}
