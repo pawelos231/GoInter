@@ -2,7 +2,7 @@ package ast
 
 import (
 	"bytes"
-	"interpreter/token"
+	"interpreter/src/token"
 	"strings"
 )
 
@@ -266,15 +266,21 @@ func (bs *BlockStatement) String() string {
 	return out.String()
 }
 
+/*
+fn(a,b,c) {
+	return a + b - c;
+}
+
+fn <parameters> <block stmt>
+*/
+
 type FunctionLiteral struct {
 	Token      token.Token
 	Parameters []*Identifier
 	Body       *BlockStatement
 }
 
-func (fl *FunctionLiteral) expressionNode() {
-
-}
+func (fl *FunctionLiteral) expressionNode() {}
 
 func (fl *FunctionLiteral) TokenLiteral() string {
 	return fl.Token.Literal
@@ -290,9 +296,39 @@ func (fl *FunctionLiteral) String() string {
 
 	out.WriteString(fl.TokenLiteral())
 	out.WriteString("(")
-	out.WriteString(strings.Join(params, ","))
+	out.WriteString(strings.Join(params, ", "))
 	out.WriteString(") ")
 	out.WriteString(fl.Body.String())
+
+	return out.String()
+}
+
+//call expressions, calling the function like: add() or divide(param)
+
+type FunctionCallExpression struct {
+	Token        token.Token
+	FunctionName Expression
+	Arguments    []Expression
+}
+
+func (fce *FunctionCallExpression) expressionNode() {}
+
+func (fce *FunctionCallExpression) TokenLiteral() string {
+	return fce.Token.Literal
+}
+
+func (fce *FunctionCallExpression) String() string {
+	var out bytes.Buffer
+	arguments := []string{}
+
+	for _, v := range fce.Arguments {
+		arguments = append(arguments, v.String())
+	}
+
+	out.WriteString(fce.TokenLiteral())
+	out.WriteString("(")
+	out.WriteString(strings.Join(arguments, ","))
+	out.WriteString(") ")
 
 	return out.String()
 }

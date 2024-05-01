@@ -2,9 +2,9 @@ package parser
 
 import (
 	"fmt"
-	"interpreter/ast"
-	"interpreter/lexer"
-	"interpreter/token"
+	"interpreter/src/ast"
+	"interpreter/src/lexer"
+	"interpreter/src/token"
 	"strconv"
 )
 
@@ -44,6 +44,7 @@ var precedences = map[token.TokenType]int{
 	token.MINUS:   SUM,
 	token.SLASH:   PRODUCT,
 	token.ASTERIK: PRODUCT,
+	token.LPAREN:  CALL,
 }
 
 func NewParser(l *lexer.Lexer) *Parser {
@@ -74,8 +75,31 @@ func NewParser(l *lexer.Lexer) *Parser {
 	p.registerInfix(token.NOT_EQ, p.parseInfixExpression)
 	p.registerInfix(token.LT, p.parseInfixExpression)
 	p.registerInfix(token.GT, p.parseInfixExpression)
+	p.registerInfix(token.LPAREN, p.parseFunctionCallExpression)
 
 	return p
+}
+
+func (p *Parser) ParseProgram() *ast.Program {
+	program := &ast.Program{}
+	program.Statements = []ast.Statement{}
+	for p.curToken.Type != token.EOF {
+		stmt := p.parseStatement()
+		if stmt != nil {
+			program.Statements = append(program.Statements, stmt)
+		}
+		p.nextToken()
+	}
+	return program
+}
+
+func (p *Parser) Errors() []string {
+	return p.errors
+}
+
+func (p *Parser) peekError(t token.TokenType) {
+	msg := fmt.Sprintf("expected next token to be %s, got %s instead", t, p.peekToken.Type)
+	p.errors = append(p.errors, msg)
 }
 
 func (p *Parser) peekPrecedence() int {
@@ -92,31 +116,9 @@ func (p *Parser) currPrecedence() int {
 	return LOWEST
 }
 
-func (p *Parser) Errors() []string {
-	return p.errors
-}
-
-func (p *Parser) peekError(t token.TokenType) {
-	msg := fmt.Sprintf("expected next token to be %s, got %s instead", t, p.peekToken.Type)
-	p.errors = append(p.errors, msg)
-}
-
 func (p *Parser) nextToken() {
 	p.curToken = p.peekToken
 	p.peekToken = p.l.NextToken()
-}
-
-func (p *Parser) ParseProgram() *ast.Program {
-	program := &ast.Program{}
-	program.Statements = []ast.Statement{}
-	for p.curToken.Type != token.EOF {
-		stmt := p.parseStatement()
-		if stmt != nil {
-			program.Statements = append(program.Statements, stmt)
-		}
-		p.nextToken()
-	}
-	return program
 }
 
 func (p *Parser) parseStatement() ast.Statement {
@@ -295,6 +297,39 @@ func (p *Parser) parseFunctionParameters() []*ast.Identifier {
 	return identifiers
 }
 
+func (p *Parser) parseFunctionCallExpression(fnName ast.Expression) ast.Expression {
+	exp := &ast.FunctionCallExpression{Token: p.curToken, FunctionName: fnName}
+	exp.Arguments = p.parseCallArgs()
+	return exp
+}
+
+func (p *Parser) parseCallArgs() []ast.Expression {
+	args := []ast.Expression{}
+
+	//if function looks for example like: add(), then return empty args
+	if p.peekTokenIs(token.RPAREN) {
+		p.nextToken()
+		return args
+	}
+
+	p.nextToken()
+	//beacuse every argument is an expression we parse them using parseExpression
+	args = append(args, p.parseExpression(LOWEST))
+
+	for p.peekTokenIs(token.COMMA) {
+		p.nextToken()
+		p.nextToken()
+		args = append(args, p.parseExpression(LOWEST))
+	}
+
+	//if after parsing the arguments next token is not right parenthases "}" then return nil
+	if !p.expectPeek(token.RPAREN) {
+		return nil
+	}
+
+	return args
+}
+
 func (p *Parser) parseIdentifier() ast.Expression {
 	return &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
 }
@@ -334,7 +369,6 @@ func (p *Parser) parseLetStatement() *ast.LetStatement {
 	}
 
 	stmt.Name = &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
-	fmt.Printf(stmt.String())
 	//for now ignore all expression until semicolon
 	if !p.expectPeek(token.ASSIGN) {
 		return nil
@@ -351,6 +385,7 @@ func (p *Parser) parseBoolean() ast.Expression {
 	return &ast.Boolean{Token: p.curToken, Value: p.curTokenIs(token.TRUE)}
 }
 
+// helper method, informations about token
 func (p *Parser) curTokenIs(t token.TokenType) bool {
 	return p.curToken.Type == t
 }

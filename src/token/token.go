@@ -2,9 +2,8 @@ package token
 
 type TokenType string
 
-//literal = let, if, fn...
-//TokenType = IDENT, FUNCTION, LET...
-
+// Literal = let, if, fn, or for IDENT, it can be any variable name like: myVar, anotherVar
+// TokenType = IDENT, FUNCTION, LET...
 type Token struct {
 	Type    TokenType
 	Literal string
@@ -38,7 +37,7 @@ const (
 	LBRACE = "{"
 	RBRACE = "}"
 
-	//Key words
+	//Keywords
 	FUNCTION = "FUNCTION"
 	LET      = "LET"
 	IF       = "IF"

@@ -5,8 +5,8 @@ package repl
 import (
 	"bufio"
 	"fmt"
-	"interpreter/lexer"
-	"interpreter/token"
+	"interpreter/src/lexer"
+	"interpreter/src/token"
 	"io"
 )
 
